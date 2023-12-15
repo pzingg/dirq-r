@@ -1,0 +1,32 @@
+Package: dirq
+Title: A Filesystem Directory Based Queue
+Description: A port of Perl module Directory::Queue::Simple
+  http://search.cpan.org/dist/Directory-Queue/
+  The goal of this package is to offer a simple queue system
+  using the underlying filesystem for storage, security and
+  to prevent race conditions via atomic operations. It focuses
+  on simplicity, robustness and scalability. This package
+  allows multiple concurrent readers and writers to interact
+  with the same queue.
+Version: 0.1.0
+License: MIT + file LICENSE
+URL: https://github.com/pzingg/dirq-r
+BugReports: https://github.com/pzingg/dirq-r/issues
+Authors@R: c(
+  person(
+    family = "Zingg",
+    given = "Peter",
+    email = "peter.zingg@gmail.com",
+    role = c("aut", "cre")
+  ))
+Imports:
+  jsonlite,
+  purrr,
+  R6
+Suggests:
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
+Encoding: UTF-8
+Language: en-US
+RoxygenNote: 7.1.1
+Roxygen: list(markdown = TRUE)

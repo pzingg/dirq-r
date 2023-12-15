@@ -1,0 +1,76 @@
+---
+output:
+  github_document:
+    html_preview: false
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r knitrsetup, echo = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "README-"
+)
+options(tibble.print_min = 5, tibble.print_max = 5)
+```
+
+```{r mainexample, echo = FALSE}
+suppressMessages(suppressWarnings(library(dirq)))
+```
+
+# dirq - A Filesystem Directory Based Queue
+
+A port of Perl module [Directory::Queue::Simple]
+  (http://search.cpan.org/dist/Directory-Queue/)
+The goal of this package is to offer a simple queue system
+using the underlying filesystem for storage, security and
+to prevent race conditions via atomic operations.
+
+A simple producer:
+
+```{r producer}
+path <- tempfile() # Define a path to your queue.
+path # In real life, temp files go away when the session exits, so be careful.
+q <- dirq(path) # Create a new queue or recover an existing one.
+for (i in seq.int(1, 100)) {
+  name <- q$add(list(data = paste("element", i)), mode = "json")
+  cat(name)
+}
+```
+
+A simple consumer:
+
+```{r consumer}
+q <- dirq(path)
+cursor <- q$first()
+while (!is.null(cursor)) {
+  if (q$lock(cursor)) {
+    cat(paste("reading element", cursor$name))
+    data <- q$get(cursor, mode = "json")
+    q$remove(cursor)
+    # or use q$unlock(cursor) to just peek at data
+  }
+  cursor <- q$next()
+}
+```
+
+# Similar work
+
+## txtq
+
+[Will Landau](https://github.com/wlandau)'s [`txtq`](https://github.com/wlandau/txtq) is also a pure filesystem-based queue.
+
+## liteq
+
+[Gábor Csárdi](https://github.com/gaborcsardi)'s [`liteq`](https://github.com/r-lib/liteq) package offers essentially the same functionality implemented with SQLite. It has a some additional features, such as the ability to detect crashed workers and re-queue failed messages, but it was in an early stage of development at the time `dirq` was released.
+
+## Other message queues
+
+There is a plethora of message queues beyond R, most notably [ZeroMQ](https://zeromq.org) and [RabbitMQ](https://www.rabbitmq.com/). In fact, [Jeroen Ooms](https://github.com/jeroen) and [Whit Armstrong](https://github.com/armstrtw) maintain [`rzmq`](https://github.com/ropensci/rzmq), a package to work with [ZeroMQ](https://zeromq.org) from R. Even in this landscape, `dirq` has advantages.
+
+1. The `dirq` user interface is friendly, and its internals are simple. No prior knowledge of sockets or message-passing is required.
+2. `dirq` is lightweight, R-focused, and easy to install. It only depends on R and a few packages on [CRAN](https://cran.r-project.org).
+3. Because `dirq` it is file-based,
+    - The queue persists even if your work crashes, so you can diagnose failures with `q$log()` and `q$list()`.
+    - Job monitoring is easy. Just open another R session and call `q$list()` while your work is running.

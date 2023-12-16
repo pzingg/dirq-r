@@ -20,13 +20,13 @@ Authors@R: c(
     role = c("aut", "cre")
   ))
 Imports:
+  fs,
   jsonlite,
-  purrr,
   R6
 Suggests:
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
 Encoding: UTF-8
 Language: en-US
-RoxygenNote: 7.1.1
+RoxygenNote: 7.2.3
 Roxygen: list(markdown = TRUE)

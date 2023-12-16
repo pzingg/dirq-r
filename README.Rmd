@@ -12,7 +12,6 @@ knitr::opts_chunk$set(
   comment = "#>",
   fig.path = "README-"
 )
-options(tibble.print_min = 5, tibble.print_max = 5)
 ```
 
 ```{r mainexample, echo = FALSE}
@@ -30,28 +29,35 @@ to prevent race conditions via atomic operations.
 A simple producer:
 
 ```{r producer}
-path <- tempfile() # Define a path to your queue.
-path # In real life, temp files go away when the session exits, so be careful.
-q <- dirq(path) # Create a new queue or recover an existing one.
-for (i in seq.int(1, 100)) {
-  name <- q$add(list(data = paste("element", i)), mode = "json")
-  cat(name)
+# Define a path to your queue
+# In production, you wouldn't use a temporary directory!
+path <- tempfile()
+# Create a new queue or recover an existing one
+q <- dirq(path)
+cat(paste("top level directory is", q$path(), "\n"))
+# Add some messages
+for (i in seq.int(1, 6)) {
+  name <- q$add(list(data = paste("element", i)), format = "json")
+  cat(paste("added element", name, "\n"))
 }
 ```
 
 A simple consumer:
 
 ```{r consumer}
+# Recover the previous queue
 q <- dirq(path)
-cursor <- q$first()
+# Get the first element in the queue
+cursor <- q$iter_first()
 while (!is.null(cursor)) {
   if (q$lock(cursor)) {
-    cat(paste("reading element", cursor$name))
-    data <- q$get(cursor, mode = "json")
+    cat(paste("reading element", cursor, "\n"))
+    data <- q$get(cursor, format = "json")
     q$remove(cursor)
-    # or use q$unlock(cursor) to just peek at data
+    # Or use q$unlock(cursor) to just peek at data
   }
-  cursor <- q$next()
+  # Get the next element in the queue
+  cursor <- q$iter_next(cursor)
 }
 ```
 
@@ -69,8 +75,9 @@ while (!is.null(cursor)) {
 
 There is a plethora of message queues beyond R, most notably [ZeroMQ](https://zeromq.org) and [RabbitMQ](https://www.rabbitmq.com/). In fact, [Jeroen Ooms](https://github.com/jeroen) and [Whit Armstrong](https://github.com/armstrtw) maintain [`rzmq`](https://github.com/ropensci/rzmq), a package to work with [ZeroMQ](https://zeromq.org) from R. Even in this landscape, `dirq` has advantages.
 
-1. The `dirq` user interface is friendly, and its internals are simple. No prior knowledge of sockets or message-passing is required.
-2. `dirq` is lightweight, R-focused, and easy to install. It only depends on R and a few packages on [CRAN](https://cran.r-project.org).
-3. Because `dirq` it is file-based,
-    - The queue persists even if your work crashes, so you can diagnose failures with `q$log()` and `q$list()`.
-    - Job monitoring is easy. Just open another R session and call `q$list()` while your work is running.
+  1. The `dirq` user interface is friendly, and its internals are simple.
+    No prior knowledge of sockets or message-passing is required.
+  2. `dirq` is lightweight, R-focused, and easy to install. It only depends
+    on R and a few packages on [CRAN](https://cran.r-project.org).
+  3. Because `dirq` it is file-based, the queue persists even if your work
+    crashes.
